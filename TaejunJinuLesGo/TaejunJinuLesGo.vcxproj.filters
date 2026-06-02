@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="소스 파일\Taejun">
+      <UniqueIdentifier>{fb8bc3ec-aa38-4887-9568-49b3cbe12bd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Jinu">
+      <UniqueIdentifier>{78f74743-08d5-41ae-b4a9-b700697f780e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Console.h">
