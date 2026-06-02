@@ -7,7 +7,7 @@ void SetUnicodeMode()
 void SetDefaultMode()
 {
 	(void)_setmode(_fileno(stdout), _O_TEXT);
-}
+}//포크 왜쓰노
 
 void RenderChar(char ch, int delayTime, bool isSkip)
 {
