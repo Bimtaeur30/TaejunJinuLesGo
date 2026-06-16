@@ -2,6 +2,10 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <Windows.h>
+#include <shellapi.h>
+
+#pragma comment(lib, "Shell32.lib")
 
 constexpr int W = 80;
 constexpr int H = 35;
@@ -102,7 +106,7 @@ int ShowMainScreen()
         for (int i = 0; i < 2; ++i)
         {
             int prevX = (int)targetX[i];
-            targetX[i] = targetBaseX[i] + sinf(t + phase[i]) * 6.f;
+            targetX[i] = targetBaseX[i] + sinf(t + phase[i]) * 6.f;//sinf == -1  1까지 반복 사인은 위아래로 계속 반복하기 떄문에 왔다갔다 가능
             int nextX = (int)targetX[i];
 
             if (prevX != nextX)
@@ -124,6 +128,32 @@ int ShowMainScreen()
         FrameSync(FPS);
     }
 }
+bool OpenWindowsSoundSettings()
+{
+    HINSTANCE result = ShellExecuteW(
+        nullptr,
+        L"open",
+        L"ms-settings:sound",
+        nullptr,
+        nullptr,
+        SW_SHOWNORMAL
+    );
+
+    // 실패하면 구버전 제어판 소리 창으로 대체
+    if ((INT_PTR)result <= 32)
+    {
+        result = ShellExecuteW(
+            nullptr,
+            L"open",
+            L"control.exe",
+            L"mmsys.cpl",
+            nullptr,
+            SW_SHOWNORMAL
+        );
+    }
+
+    return (INT_PTR)result > 32;
+}
 
 int main()
 {
@@ -139,19 +169,31 @@ int main()
         {
         case 1:
             SetColor(Color::LIGHT_GREEN);
-            GotoXY(30, 13); std::cout << ">>  게임을 시작합니다!";
+            GotoXY(30, 13); std::cout << "게임을 시작하겠습니다!";
             SetColor();
             Sleep(1500);
             break;
         case 2:
+        {
+            system("cls");
+
             SetColor(Color::LIGHT_BLUE);
-            GotoXY(30, 13); std::cout << "~  소리 설정";
+            GotoXY(27, 13); std::cout << "레전드 대기업의 소리설정창 키는중....";
             SetColor();
-            Sleep(1500);
+
+            if (!OpenWindowsSoundSettings())
+            {
+                SetColor(Color::LIGHT_RED);
+                GotoXY(27, 15); std::cout << "소리 설정 창을 열지 못했습니다.";
+                SetColor();
+            }
+
+            Sleep(1000);
             break;
+        }
         case 3:
             SetColor(Color::LIGHT_RED);
-            GotoXY(31, 13); std::cout << "x  게임을 종료합니다.";
+            GotoXY(31, 13); std::cout << "게임을 종료하겠습니다";
             SetColor();
             Sleep(1000);
             return 0;
