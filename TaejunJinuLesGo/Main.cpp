@@ -13,6 +13,11 @@ constexpr int ARROW_SPEED = 2;
 constexpr int BOW_MOVE_FIRST_DELAY = 8;
 constexpr int BOW_MOVE_REPEAT_DELAY = 3;
 
+constexpr int TARGET_X = CONSOLE_WIDTH - 8;
+constexpr int TARGET_MIN_Y = 2;
+constexpr int TARGET_MAX_Y = CONSOLE_HEIGHT - 4;
+constexpr float TARGET_SPEED = 0.15f;
+
 struct Arrow
 {
     float x;
@@ -30,6 +35,9 @@ static Arrow arrows[MAX_ARROWS] = {};
 static int   ammo = MAX_AMMO;
 static int   bowMoveCooldown = 0;
 static bool  bowMoveHeld = false;
+
+static float targetY = (float)(CONSOLE_HEIGHT / 2);
+static int   targetDir = 1;
 
 void SpawnArrow(int startX, int startY)
 {
@@ -126,19 +134,70 @@ void DrawArrow(int x, int y, bool erase = false)
     SetColor();
 }
 
+void DrawTarget(int x, int y, bool erase = false)
+{
+    //  |O|
+    //  |@|
+    //  |O|
+    for (int dy = -1; dy <= 1; ++dy)
+    {
+        if (erase)
+        {
+            ClearCell(x, y + dy);
+            ClearCell(x + 1, y + dy);
+            ClearCell(x + 2, y + dy);
+            continue;
+        }
+        GotoXY(x, y + dy);
+        SetColor(Color::LIGHT_RED);
+        cout << '|';
+        SetColor(dy == 0 ? Color::LIGHT_YELLOW : Color::LIGHT_RED);
+        cout << (dy == 0 ? '@' : 'O');
+        SetColor(Color::LIGHT_RED);
+        cout << '|';
+    }
+    SetColor();
+}
+
+bool CheckHit(int arrowX, int arrowY, int tgtX, int tgtY)
+{
+    int headX = arrowX + 1;
+    return (headX >= tgtX && headX <= tgtX + 2) &&
+        (arrowY >= tgtY - 1 && arrowY <= tgtY + 1);
+}
+
+void UpdateTarget()
+{
+    int oldY = (int)targetY;
+
+    targetY += TARGET_SPEED * targetDir;
+
+    if (targetY <= TARGET_MIN_Y) { targetY = (float)TARGET_MIN_Y; targetDir = 1; }
+    if (targetY >= TARGET_MAX_Y) { targetY = (float)TARGET_MAX_Y; targetDir = -1; }
+
+    int newY = (int)targetY;
+
+    if (newY != oldY)
+    {
+        DrawTarget(TARGET_X, oldY, true);
+        DrawTarget(TARGET_X, newY);
+    }
+}
+
 void Init()
 {
     SetConsoleWindowSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
     SetConsoleWindowStyle(true);
     SetCursorVisible(false);
     SetConsoleGameTitle(L"Arrow Shooting Game");
-    SetConsoleMouseInputDisabled();
+    SetConsoleMouseInputDisabled(); 
 
     system("cls");
 
     DrawBorder();
     DrawAmmoHUD();
     DrawBow(BOW_X, bowY);
+    DrawTarget(TARGET_X, (int)targetY);
 }
 
 void HandleInput()
@@ -183,6 +242,8 @@ void HandleInput()
 
 void UpdateArrows()
 {
+    int tgtY = (int)targetY;
+
     for (int i = 0; i < MAX_ARROWS; ++i)
     {
         if (!arrows[i].active) continue;
@@ -190,6 +251,14 @@ void UpdateArrows()
         int oldX = (int)arrows[i].x;
         arrows[i].x += ARROW_SPEED;
         int newX = (int)arrows[i].x;
+
+        if (CheckHit(newX, arrows[i].y, TARGET_X, tgtY))
+        {
+            DrawArrow(oldX, arrows[i].y, true);
+            arrows[i].active = false;
+            ShakeConsoleWindow(6, 300, 20);
+            continue;
+        }
 
         if (newX >= CONSOLE_WIDTH - 1)
         {
@@ -217,6 +286,7 @@ int main()
 
         HandleInput();
         UpdateArrows();
+        UpdateTarget();
 
         FrameSync(FPS);
     }
