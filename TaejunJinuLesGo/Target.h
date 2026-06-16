@@ -1,18 +1,43 @@
-#pragma once
+ï»¿#pragma once
 #include "Game.h"
 
-constexpr int   TARGET_X = CONSOLE_WIDTH - 8;
-constexpr int   TARGET_MIN_Y = 2;
-constexpr int   TARGET_MAX_Y = CONSOLE_HEIGHT - 4;
-constexpr float TARGET_SPEED = 0.15f;
+// ==================== ìŠ¤í…Œì´ì§€ ì„¤ì • ====================
+constexpr int   MAX_STAGE = 5;
+constexpr int   MAX_TARGETS = MAX_STAGE;   // ìŠ¤í…Œì´ì§€ë‹¹ ìµœëŒ€ ê³¼ë… ìˆ˜ = ìŠ¤í…Œì´ì§€ ë²ˆí˜¸
 
-constexpr int BLINK_TOTAL_FRAMES = 18; // ºí¸µÅ© Áö¼Ó ÇÁ·¹ÀÓ (30fps ±âÁØ ~0.6ÃÊ)
-constexpr int BLINK_INTERVAL_FRAMES = 3;  // Èò»ö <-> ¿ø·¡»ö ÀüÈ¯ °£°İ
+// ==================== ê³¼ë… X ë°°ì¹˜ ====================
+// ì˜¤ë¥¸ìª½ ì˜ì—­ì— ê³¼ë…ë“¤ì„ ê· ë“± ë°°ì¹˜. ì¶©ë¶„í•œ ê°„ê²© í™•ë³´.
+constexpr int   TARGET_AREA_LEFT = CONSOLE_WIDTH - 25;
+constexpr int   TARGET_AREA_RIGHT = CONSOLE_WIDTH - 5;
 
-extern float targetY;
-extern int   targetDir;
-extern int   targetBlinkFrames; // 0ÀÌ¸é ºí¸µÅ© ¾øÀ½
+constexpr int   TARGET_MIN_Y = 3;
+constexpr int   TARGET_MAX_Y = CONSOLE_HEIGHT - 5;
 
-void DrawTarget(int x, int y, bool erase = false);
-void StartTargetBlink();
-void UpdateTarget();
+constexpr int BLINK_TOTAL_FRAMES = 18;  // ~0.6ì´ˆ
+constexpr int BLINK_INTERVAL_FRAMES = 3;
+
+constexpr float TARGET_BASE_SPEED = 0.12f;   // ìŠ¤í…Œì´ì§€ 1 ê¸°ë³¸ ì†ë„
+constexpr float TARGET_SPEED_STEP = 0.06f;   // ìŠ¤í…Œì´ì§€ë‹¹ ì¦ê°€ëŸ‰
+
+struct Target
+{
+    float y;
+    int   x;
+    int   dir;
+    float speed;
+    int   blinkFrames;
+    bool  active;
+    bool  removing;
+    int   prevDrawY;
+};
+
+extern Target targets[MAX_TARGETS];
+extern int    targetCount;
+extern int    currentStage;
+
+void InitStage(int stage);
+void DrawTarget(int idx, bool erase = false);
+void StartTargetBlink(int idx);
+void UpdateTargets();
+bool AllTargetsCleared();
+void DrawStageHUD();

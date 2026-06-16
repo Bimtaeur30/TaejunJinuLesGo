@@ -5,7 +5,7 @@
 
 int main()
 {
-    Init();
+    Init();   // 스테이지 1 시작
 
     while (true)
     {
@@ -15,7 +15,25 @@ int main()
 
         HandleInput();
         UpdateArrows();
-        UpdateTarget();
+        UpdateTargets();
+
+        // ── 스테이지 클리어 판정 ──────────────────────────
+        if (AllTargetsCleared())
+        {
+            ShowStageClear(currentStage);
+
+            int nextStage = currentStage + 1;
+            if (nextStage > MAX_STAGE)
+            {
+                ShowGameClear();
+                break;
+            }
+
+            StartStage(nextStage);
+        }
+        // ─────────────────────────────────────────────────
+
+        DrawStageHUD();   // 남은 과녁 수 실시간 갱신
 
         FrameSync(FPS);
     }
