@@ -1,28 +1,45 @@
 #include "Bow.h"
 #include "Arrow.h"
 
-int  bowY = CONSOLE_HEIGHT / 2;
-static int  bowMoveCooldown = 0;
+#include <iostream>
+#include <Windows.h>
+
+int bowY = CONSOLE_HEIGHT / 2;
+
+static int bowMoveCooldown = 0;
 static bool bowMoveHeld = false;
 
 void DrawBow(int x, int y, bool erase)
 {
     if (erase)
     {
-        for (int dy = -1; dy <= 1; ++dy) ClearCell(x, y + dy);
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            ClearCell(x, y + dy);
+        }
+
         ClearCell(x + 1, y);
         ClearCell(x + 2, y);
+
         return;
     }
 
     SetColor(Color::LIGHT_YELLOW);
-    GotoXY(x, y - 1); cout << ')';
-    GotoXY(x, y);     cout << ')';
-    GotoXY(x, y + 1); cout << ')';
+    GotoXY(x, y - 1);
+    std::cout << ')';
+
+    GotoXY(x, y);
+    std::cout << ')';
+
+    GotoXY(x, y + 1);
+    std::cout << ')';
 
     SetColor(Color::WHITE);
-    GotoXY(x + 1, y); cout << '=';
-    GotoXY(x + 2, y); cout << '>';
+    GotoXY(x + 1, y);
+    std::cout << '=';
+
+    GotoXY(x + 2, y);
+    std::cout << '>';
 
     SetColor();
 }
@@ -34,7 +51,9 @@ void HandleInput()
     bool anyDir = upHeld || downHeld;
 
     if (bowMoveCooldown > 0)
+    {
         --bowMoveCooldown;
+    }
 
     if (!anyDir)
     {
@@ -61,8 +80,11 @@ void HandleInput()
     if (GetKeyDown(VK_SPACE) && ammo > 0)
     {
         SpawnArrow(BOW_X + 2, bowY);
+
         --ammo;
+
         DrawAmmoHUD();
+
         ShakeConsoleWindow(2, 80, 20);
     }
 }

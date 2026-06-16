@@ -9,8 +9,9 @@ constexpr int FPS = 30;
 void ClearCell(int x, int y);
 void DrawBorder();
 
-// 초기화 / 스테이지 전환
+// 게임 흐름
 void Init();
+void RunGame();
 void StartStage(int stage);
 void ShowStageClear(int stage);
 void ShowGameClear();

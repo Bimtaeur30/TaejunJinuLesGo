@@ -1,43 +1,38 @@
 ﻿#pragma once
 #include "Game.h"
 
-// ==================== 스테이지 설정 ====================
-constexpr int   MAX_STAGE = 5;
-constexpr int   MAX_TARGETS = MAX_STAGE;   // 스테이지당 최대 과녁 수 = 스테이지 번호
+constexpr int MAX_STAGE = 3;
+constexpr int MAX_TARGETS = 5;
 
-// ==================== 과녁 X 배치 ====================
-// 오른쪽 영역에 과녁들을 균등 배치. 충분한 간격 확보.
-constexpr int   TARGET_AREA_LEFT = CONSOLE_WIDTH - 25;
-constexpr int   TARGET_AREA_RIGHT = CONSOLE_WIDTH - 5;
+constexpr int TARGET_MIN_Y = 3;
+constexpr int TARGET_MAX_Y = CONSOLE_HEIGHT - 4;
 
-constexpr int   TARGET_MIN_Y = 3;
-constexpr int   TARGET_MAX_Y = CONSOLE_HEIGHT - 5;
-
-constexpr int BLINK_TOTAL_FRAMES = 18;  // ~0.6초
-constexpr int BLINK_INTERVAL_FRAMES = 3;
-
-constexpr float TARGET_BASE_SPEED = 0.12f;   // 스테이지 1 기본 속도
-constexpr float TARGET_SPEED_STEP = 0.06f;   // 스테이지당 증가량
+constexpr int BLINK_TOTAL_FRAMES = 10;
+constexpr int BLINK_INTERVAL_FRAMES = 2;
 
 struct Target
 {
-    float y;
-    int   x;
-    int   dir;
-    float speed;
-    int   blinkFrames;
-    bool  active;
-    bool  removing;
-    int   prevDrawY;
+    int x = 0;
+    float y = 0.0f;
+    int dir = 1;
+    float speed = 0.25f;
+    int blinkFrames = 0;
+    bool active = false;
 };
 
 extern Target targets[MAX_TARGETS];
-extern int    targetCount;
-extern int    currentStage;
+extern int targetCount;
+extern int currentStage;
 
 void InitStage(int stage);
-void DrawTarget(int idx, bool erase = false);
-void StartTargetBlink(int idx);
+void DrawStageHUD();
+
+void DrawTarget(int index, bool erase = false);
+void StartTargetBlink(int index);
+void DestroyTarget(int index);
+void UpdateTarget();
+
+int FindHitTarget(int arrowX, int arrowY);
+bool AreAllTargetsDead();
 void UpdateTargets();
 bool AllTargetsCleared();
-void DrawStageHUD();

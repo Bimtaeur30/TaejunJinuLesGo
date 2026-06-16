@@ -1,203 +1,232 @@
 ﻿#include "Target.h"
-#include <cstdlib>
-#include <cmath>
+#include "Game.h"
+
+#include <iostream>
 
 Target targets[MAX_TARGETS] = {};
-int    targetCount = 0;
-int    currentStage = 1;
+int targetCount = 0;
+int currentStage = 1;
 
-// ───────────────────────────────────────────────
-//  지정 좌표(x, y)의 과녁 3칸을 화면에서 지운다
-// ───────────────────────────────────────────────
-static void EraseTargetAt(int x, int y)
-{
-    for (int dy = -1; dy <= 1; ++dy)
-    {
-        ClearCell(x, y + dy);
-        ClearCell(x + 1, y + dy);
-        ClearCell(x + 2, y + dy);
-    }
-}
-
-// ───────────────────────────────────────────────
-//  스테이지 초기화
-// ───────────────────────────────────────────────
 void InitStage(int stage)
 {
     currentStage = stage;
-    targetCount = stage;
-
-    int areaWidth = TARGET_AREA_RIGHT - TARGET_AREA_LEFT;
-    int slot = (targetCount > 1) ? areaWidth / (targetCount - 1) : 0;
 
     for (int i = 0; i < MAX_TARGETS; ++i)
-        targets[i] = {};
-
-    for (int i = 0; i < targetCount; ++i)
     {
-        int xPos = (targetCount == 1)
-            ? (TARGET_AREA_LEFT + areaWidth / 2)
-            : (TARGET_AREA_LEFT + slot * i);
+        targets[i] = {};
+    }
 
-        float base = TARGET_BASE_SPEED + TARGET_SPEED_STEP * (stage - 1);
-        float jitter = ((float)(rand() % 9) - 4) * 0.015f;
-        float spd = base + jitter;
-        if (spd < 0.05f) spd = 0.05f;
+    if (stage == 1)
+    {
+        targetCount = 1;
 
-        int midY = (TARGET_MIN_Y + TARGET_MAX_Y) / 2;
-        int range = (TARGET_MAX_Y - TARGET_MIN_Y) / 2;
-        int startY = midY + (range * (2 * i - (targetCount - 1))) / (targetCount + 1);
+        targets[0].x = CONSOLE_WIDTH - 10;
+        targets[0].y = CONSOLE_HEIGHT / 2.0f;
+        targets[0].dir = 1;
+        targets[0].speed = 0.20f;
+        targets[0].active = true;
+    }
+    else if (stage == 2)
+    {
+        targetCount = 2;
 
-        targets[i].y = (float)startY;
-        targets[i].x = xPos;
-        targets[i].dir = (i % 2 == 0) ? 1 : -1;
-        targets[i].speed = spd;
-        targets[i].blinkFrames = 0;
-        targets[i].active = true;
-        targets[i].removing = false;
-        targets[i].prevDrawY = startY;   // 초기 그린 Y
+        targets[0].x = CONSOLE_WIDTH - 12;
+        targets[0].y = 8.0f;
+        targets[0].dir = 1;
+        targets[0].speed = 0.25f;
+        targets[0].active = true;
+
+        targets[1].x = CONSOLE_WIDTH - 22;
+        targets[1].y = 20.0f;
+        targets[1].dir = -1;
+        targets[1].speed = 0.30f;
+        targets[1].active = true;
+    }
+    else
+    {
+        targetCount = 3;
+
+        targets[0].x = CONSOLE_WIDTH - 10;
+        targets[0].y = 6.0f;
+        targets[0].dir = 1;
+        targets[0].speed = 0.30f;
+        targets[0].active = true;
+
+        targets[1].x = CONSOLE_WIDTH - 20;
+        targets[1].y = 15.0f;
+        targets[1].dir = -1;
+        targets[1].speed = 0.35f;
+        targets[1].active = true;
+
+        targets[2].x = CONSOLE_WIDTH - 30;
+        targets[2].y = 23.0f;
+        targets[2].dir = 1;
+        targets[2].speed = 0.28f;
+        targets[2].active = true;
     }
 }
 
-// ───────────────────────────────────────────────
-//  과녁 그리기 — 항상 현재 t.y 위치에 그림
-// ───────────────────────────────────────────────
-void DrawTarget(int idx, bool erase)
+void DrawStageHUD()
 {
-    if (idx < 0 || idx >= targetCount) return;
+    SetColor(Color::WHITE);
+    GotoXY(CONSOLE_WIDTH / 2 - 5, 1);
+    std::cout << "STAGE " << currentStage << " / " << MAX_STAGE;
+    SetColor();
+}
 
-    Target& t = targets[idx];
-    int x = t.x;
-    int y = (int)t.y;
+void DrawTarget(int index, bool erase)
+{
+    if (index < 0 || index >= targetCount) return;
 
-    if (erase)
-    {
-        EraseTargetAt(x, y);
-        return;
-    }
+    Target& target = targets[index];
 
-    bool blink = (t.blinkFrames > 0) &&
-        ((t.blinkFrames / BLINK_INTERVAL_FRAMES) % 2 == 1);
+    if (!target.active && !erase) return;
+
+    int x = target.x;
+    int y = (int)target.y;
+
+    bool blink =
+        target.blinkFrames > 0 &&
+        ((target.blinkFrames / BLINK_INTERVAL_FRAMES) % 2 == 1);
 
     for (int dy = -1; dy <= 1; ++dy)
     {
+        if (erase)
+        {
+            ClearCell(x, y + dy);
+            ClearCell(x + 1, y + dy);
+            ClearCell(x + 2, y + dy);
+            continue;
+        }
+
         GotoXY(x, y + dy);
+
         if (blink)
         {
             SetColor(Color::WHITE);
-            cout << '|';
+            std::cout << '|';
+
             SetColor(Color::WHITE);
-            cout << (dy == 0 ? '@' : 'O');
+            std::cout << (dy == 0 ? '@' : 'O');
+
             SetColor(Color::WHITE);
-            cout << '|';
+            std::cout << '|';
         }
         else
         {
             SetColor(Color::LIGHT_RED);
-            cout << '|';
+            std::cout << '|';
+
             SetColor(dy == 0 ? Color::LIGHT_YELLOW : Color::LIGHT_RED);
-            cout << (dy == 0 ? '@' : 'O');
+            std::cout << (dy == 0 ? '@' : 'O');
+
             SetColor(Color::LIGHT_RED);
-            cout << '|';
+            std::cout << '|';
         }
     }
+
     SetColor();
-
-    // 그린 위치 기록
-    t.prevDrawY = y;
 }
 
-// ───────────────────────────────────────────────
-//  블링크 시작 + 제거 예약
-// ───────────────────────────────────────────────
-void StartTargetBlink(int idx)
+void StartTargetBlink(int index)
 {
-    if (idx < 0 || idx >= targetCount) return;
-    targets[idx].blinkFrames = BLINK_TOTAL_FRAMES;
-    targets[idx].removing = true;
+    if (index < 0 || index >= targetCount) return;
+
+    targets[index].blinkFrames = BLINK_TOTAL_FRAMES;
 }
 
-// ───────────────────────────────────────────────
-//  전체 과녁 업데이트
-// ───────────────────────────────────────────────
-void UpdateTargets()
+void DestroyTarget(int index)
+{
+    if (index < 0 || index >= targetCount) return;
+    if (!targets[index].active) return;
+
+    DrawTarget(index, true);
+    targets[index].active = false;
+}
+
+void UpdateTarget()
 {
     for (int i = 0; i < targetCount; ++i)
     {
-        Target& t = targets[i];
-        if (!t.active) continue;
+        Target& target = targets[i];
 
-        // ── 블링크 처리 ─────────────────────────────
-        if (t.blinkFrames > 0)
+        if (!target.active) continue;
+
+        int oldY = (int)target.y;
+
+        if (target.blinkFrames > 0)
         {
-            --t.blinkFrames;
-
-            if (t.blinkFrames == 0 && t.removing)
-            {
-                // 블링크 완료 → prevDrawY 기준으로 지우고 삭제
-                EraseTargetAt(t.x, t.prevDrawY);
-                t.active = false;
-                continue;
-            }
-
-            // 블링크 색상 갱신 (위치는 그대로)
+            --target.blinkFrames;
             DrawTarget(i);
-            continue;   // 블링크 중에는 이동하지 않음
         }
 
-        // removing이지만 blinkFrames == 0인 예외 방어
-        if (t.removing) continue;
+        target.y += target.speed * target.dir;
 
-        // ── Y 이동 ───────────────────────────────────
-        // 1) 이동 전 "마지막으로 그린 Y"를 확보
-        int drawnY = t.prevDrawY;
-
-        // 2) 위치 갱신
-        t.y += t.speed * t.dir;
-        if (t.y <= TARGET_MIN_Y) { t.y = (float)TARGET_MIN_Y; t.dir = 1; }
-        if (t.y >= TARGET_MAX_Y) { t.y = (float)TARGET_MAX_Y; t.dir = -1; }
-
-        int newY = (int)t.y;
-
-        // 3) 실제로 그린 셀이 달라졌을 때만 erase → draw
-        if (newY != drawnY)
+        if (target.y <= TARGET_MIN_Y)
         {
-            EraseTargetAt(t.x, drawnY);   // 이전에 그린 위치를 지운다
-            DrawTarget(i);                 // 새 위치에 그린다 (prevDrawY도 갱신)
+            target.y = (float)TARGET_MIN_Y;
+            target.dir = 1;
+        }
+
+        if (target.y >= TARGET_MAX_Y)
+        {
+            target.y = (float)TARGET_MAX_Y;
+            target.dir = -1;
+        }
+
+        int newY = (int)target.y;
+
+        if (newY != oldY)
+        {
+            DrawTarget(i, true);
+            DrawTarget(i);
         }
     }
 }
 
-// ───────────────────────────────────────────────
-//  스테이지 클리어 판정
-// ───────────────────────────────────────────────
-bool AllTargetsCleared()
+int FindHitTarget(int arrowX, int arrowY)
 {
+    int headX = arrowX + 1;
+
     for (int i = 0; i < targetCount; ++i)
-        if (targets[i].active) return false;
-    return true;
+    {
+        Target& target = targets[i];
+
+        if (!target.active) continue;
+
+        int tx = target.x;
+        int ty = (int)target.y;
+
+        bool hitX = headX >= tx && headX <= tx + 2;
+        bool hitY = arrowY >= ty - 1 && arrowY <= ty + 1;
+
+        if (hitX && hitY)
+        {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
-// ───────────────────────────────────────────────
-//  HUD
-// ───────────────────────────────────────────────
-void DrawStageHUD()
+bool AreAllTargetsDead()
 {
-    int remaining = 0;
     for (int i = 0; i < targetCount; ++i)
-        if (targets[i].active) ++remaining;
+    {
+        if (targets[i].active)
+        {
+            return false;
+        }
+    }
 
-    GotoXY(2, 1);
-    SetColor(Color::LIGHT_YELLOW);
-    cout << "Stage: ";
-    SetColor(Color::WHITE);
-    cout << currentStage << "/" << MAX_STAGE;
+    return true;
+}
+void UpdateTargets()
+{
+    UpdateTarget();
+}
 
-    SetColor(Color::LIGHT_YELLOW);
-    cout << "   Targets: ";
-    SetColor(Color::LIGHT_RED);
-    cout << remaining << "/" << targetCount;
-    cout << "   ";
-
-    SetColor();
+bool AllTargetsCleared()
+{
+    return AreAllTargetsDead();
 }
