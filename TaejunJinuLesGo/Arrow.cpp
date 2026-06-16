@@ -34,7 +34,7 @@ static void ArrowGlyph(float dx, float dy, char& c0, char& c1)
     else if (angle > 3 * PI8 && angle <= 5 * PI8) { c0 = ' ';  c1 = 'v'; } // S
     else if (angle > 5 * PI8 && angle <= 7 * PI8) { c0 = '<';  c1 = '/'; } // SW
     else if (angle > 7 * PI8 || angle <= -7 * PI8) { c0 = '<';  c1 = '-'; } // W
-    else if (angle > -7 * PI8 && angle <= -5 * PI8) { c0 = '<';  c1 = '\\'; } // NW
+    else if (angle > -7 * PI8 && angle <= -5 * PI8) { c0 = '<';  c1 = '\\'; }// NW
     else if (angle > -5 * PI8 && angle <= -3 * PI8) { c0 = ' ';  c1 = '^'; } // N
     else { c0 = '/';  c1 = '>'; } // NE
 }
@@ -82,6 +82,9 @@ void DrawAmmoHUD()
     SetColor();
 }
 
+// ───────────────────────────────────────────────
+//  화살 머리(x+1)가 과녁(tgtX, tgtY) 범위에 들어오면 히트
+// ───────────────────────────────────────────────
 bool CheckHit(int arrowX, int arrowY, int tgtX, int tgtY)
 {
     int headX = arrowX + 1;
@@ -89,10 +92,11 @@ bool CheckHit(int arrowX, int arrowY, int tgtX, int tgtY)
         (arrowY >= tgtY - 1 && arrowY <= tgtY + 1);
 }
 
+// ───────────────────────────────────────────────
+//  화살 업데이트: 모든 활성 과녁과 충돌 검사
+// ───────────────────────────────────────────────
 void UpdateArrows()
 {
-    int tgtY = (int)targetY;
-
     for (int i = 0; i < MAX_ARROWS; ++i)
     {
         if (!arrows[i].active) continue;
@@ -103,18 +107,16 @@ void UpdateArrows()
         arrows[i].prevX = arrows[i].x;
         arrows[i].prevY = arrows[i].y;
 
-        // X 이동 (직선)
         arrows[i].x += ARROW_SPEED;
 
         int newX = (int)arrows[i].x;
         int newY = (int)arrows[i].y;
 
-        // 이동 벡터 (방향 계산용)
         float dx = arrows[i].x - arrows[i].prevX;
         float dy = arrows[i].y - arrows[i].prevY;
-        if (fabsf(dx) < 0.001f && fabsf(dy) < 0.001f) dx = 1.0f; // 기본 오른쪽
+        if (fabsf(dx) < 0.001f && fabsf(dy) < 0.001f) dx = 1.0f;
 
-        // 화면 위아래 이탈
+        // 화면 밖 이탈
         if (newY < 1 || newY >= CONSOLE_HEIGHT - 1)
         {
             DrawArrow(oldX, oldY, dx, dy, true);
@@ -122,15 +124,26 @@ void UpdateArrows()
             continue;
         }
 
-        // 과녁 충돌
-        if (CheckHit(newX, newY, TARGET_X, tgtY))
+        // ── 다중 과녁 충돌 검사 ──────────────────────────
+        bool hit = false;
+        for (int t = 0; t < targetCount; ++t)
         {
-            DrawArrow(oldX, oldY, dx, dy, true);
-            arrows[i].active = false;
-            StartTargetBlink();
-            ShakeConsoleWindow(6, 300, 20);
-            continue;
+            if (!targets[t].active)   continue;  // 이미 파괴된 과녁 skip
+            if (targets[t].removing)  continue;  // 블링크 중인 과녁도 skip
+
+            int tgtY = (int)targets[t].y;
+            if (CheckHit(newX, newY, targets[t].x, tgtY))
+            {
+                DrawArrow(oldX, oldY, dx, dy, true);
+                arrows[i].active = false;
+                StartTargetBlink(t);
+                ShakeConsoleWindow(6, 300, 20);
+                hit = true;
+                break;
+            }
         }
+        if (hit) continue;
+        // ─────────────────────────────────────────────────
 
         // 오른쪽 벽 이탈
         if (newX >= CONSOLE_WIDTH - 1)

@@ -35,6 +35,34 @@ void DrawBorder()
     SetColor();
 }
 
+// ───────────────────────────────────────────────
+//  스테이지 시작: 화면 클리어 후 재초기화
+// ───────────────────────────────────────────────
+void StartStage(int stage)
+{
+    system("cls");
+
+    DrawBorder();
+    InitStage(stage);
+
+    // 탄약 보충
+    ammo = MAX_AMMO;
+    // 화살 전부 비활성화
+    for (int i = 0; i < MAX_ARROWS; ++i)
+        arrows[i].active = false;
+
+    DrawAmmoHUD();
+    DrawStageHUD();
+    DrawBow(BOW_X, bowY);
+
+    // 모든 과녁 그리기
+    for (int i = 0; i < targetCount; ++i)
+        DrawTarget(i);
+}
+
+// ───────────────────────────────────────────────
+//  최초 Init (스테이지 1로 시작)
+// ───────────────────────────────────────────────
 void Init()
 {
     SetConsoleWindowSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -43,10 +71,45 @@ void Init()
     SetConsoleGameTitle(L"Arrow Shooting Game");
     SetConsoleMouseInputDisabled();
 
-    system("cls");
+    StartStage(1);
+}
 
+// ───────────────────────────────────────────────
+//  스테이지 클리어 연출 (잠깐 메시지 표시 후 다음 스테이지)
+// ───────────────────────────────────────────────
+void ShowStageClear(int stage)
+{
+    int cx = CONSOLE_WIDTH / 2;
+    int cy = CONSOLE_HEIGHT / 2;
+
+    SetColor(Color::LIGHT_GREEN);
+    GotoXY(cx - 10, cy - 1); cout << "============================";
+    GotoXY(cx - 10, cy);     cout << "  STAGE " << stage << " CLEAR!  ";
+    GotoXY(cx - 10, cy + 1); cout << "============================";
+    SetColor();
+
+    Sleep(1800);
+}
+
+// ───────────────────────────────────────────────
+//  전 스테이지 클리어 연출
+// ───────────────────────────────────────────────
+void ShowGameClear()
+{
+    system("cls");
     DrawBorder();
-    DrawAmmoHUD();
-    DrawBow(BOW_X, bowY);
-    DrawTarget(TARGET_X, (int)targetY);
+
+    int cx = CONSOLE_WIDTH / 2;
+    int cy = CONSOLE_HEIGHT / 2;
+
+    SetColor(Color::LIGHT_YELLOW);
+    GotoXY(cx - 14, cy - 2); cout << "  *** CONGRATULATIONS! ***  ";
+    SetColor(Color::WHITE);
+    GotoXY(cx - 14, cy);     cout << "  All " << MAX_STAGE << " stages cleared!  ";
+    SetColor(Color::LIGHT_GREEN);
+    GotoXY(cx - 14, cy + 2); cout << "  Press any key to exit...  ";
+    SetColor();
+
+    while (!_kbhit()) Sleep(100);
+    _getch();
 }
