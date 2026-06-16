@@ -6,9 +6,6 @@ Target targets[MAX_TARGETS] = {};
 int    targetCount = 0;
 int    currentStage = 1;
 
-// ───────────────────────────────────────────────
-//  지정 좌표(x, y)의 과녁 3칸을 화면에서 지운다
-// ───────────────────────────────────────────────
 static void EraseTargetAt(int x, int y)
 {
     for (int dy = -1; dy <= 1; ++dy)
@@ -19,9 +16,6 @@ static void EraseTargetAt(int x, int y)
     }
 }
 
-// ───────────────────────────────────────────────
-//  스테이지 초기화
-// ───────────────────────────────────────────────
 void InitStage(int stage)
 {
     currentStage = stage;
@@ -59,9 +53,6 @@ void InitStage(int stage)
     }
 }
 
-// ───────────────────────────────────────────────
-//  과녁 그리기 — 항상 현재 t.y 위치에 그림
-// ───────────────────────────────────────────────
 void DrawTarget(int idx, bool erase)
 {
     if (idx < 0 || idx >= targetCount) return;
@@ -107,9 +98,6 @@ void DrawTarget(int idx, bool erase)
     t.prevDrawY = y;
 }
 
-// ───────────────────────────────────────────────
-//  블링크 시작 + 제거 예약
-// ───────────────────────────────────────────────
 void StartTargetBlink(int idx)
 {
     if (idx < 0 || idx >= targetCount) return;
@@ -117,9 +105,6 @@ void StartTargetBlink(int idx)
     targets[idx].removing = true;
 }
 
-// ───────────────────────────────────────────────
-//  전체 과녁 업데이트
-// ───────────────────────────────────────────────
 void UpdateTargets()
 {
     for (int i = 0; i < targetCount; ++i)
@@ -127,50 +112,40 @@ void UpdateTargets()
         Target& t = targets[i];
         if (!t.active) continue;
 
-        // ── 블링크 처리 ─────────────────────────────
-        if (t.blinkFrames > 0)
+        if (t.blinkFrames > 0) // 블링크
         {
             --t.blinkFrames;
 
             if (t.blinkFrames == 0 && t.removing)
             {
-                // 블링크 완료 → prevDrawY 기준으로 지우고 삭제
                 EraseTargetAt(t.x, t.prevDrawY);
                 t.active = false;
                 continue;
             }
 
-            // 블링크 색상 갱신 (위치는 그대로)
             DrawTarget(i);
-            continue;   // 블링크 중에는 이동하지 않음
+            continue;   // 블링크 중에는 이동 ㄴㄴ
         }
 
-        // removing이지만 blinkFrames == 0인 예외 방어
         if (t.removing) continue;
 
-        // ── Y 이동 ───────────────────────────────────
-        // 1) 이동 전 "마지막으로 그린 Y"를 확보
+
         int drawnY = t.prevDrawY;
 
-        // 2) 위치 갱신
         t.y += t.speed * t.dir;
         if (t.y <= TARGET_MIN_Y) { t.y = (float)TARGET_MIN_Y; t.dir = 1; }
         if (t.y >= TARGET_MAX_Y) { t.y = (float)TARGET_MAX_Y; t.dir = -1; }
 
         int newY = (int)t.y;
 
-        // 3) 실제로 그린 셀이 달라졌을 때만 erase → draw
         if (newY != drawnY)
         {
-            EraseTargetAt(t.x, drawnY);   // 이전에 그린 위치를 지운다
-            DrawTarget(i);                 // 새 위치에 그린다 (prevDrawY도 갱신)
+            EraseTargetAt(t.x, drawnY);
+            DrawTarget(i);
         }
     }
 }
 
-// ───────────────────────────────────────────────
-//  스테이지 클리어 판정
-// ───────────────────────────────────────────────
 bool AllTargetsCleared()
 {
     for (int i = 0; i < targetCount; ++i)
@@ -178,9 +153,6 @@ bool AllTargetsCleared()
     return true;
 }
 
-// ───────────────────────────────────────────────
-//  HUD
-// ───────────────────────────────────────────────
 void DrawStageHUD()
 {
     int remaining = 0;

@@ -11,8 +11,6 @@ struct Arrow
 {
     float x;
     float y;
-    float prevX; // 방향 계산용 이전 위치
-    float prevY;
     bool  active;
 };
 
@@ -20,7 +18,7 @@ extern Arrow arrows[MAX_ARROWS];
 extern int   ammo;
 
 void SpawnArrow(int startX, int startY);
-void DrawArrow(int x, int y, float dx, float dy, bool erase = false);
+void DrawArrow(int x, int y, bool erase = false);
 void DrawAmmoHUD();
 bool CheckHit(int arrowX, int arrowY, int tgtX, int tgtY);
 void UpdateArrows();

@@ -1,12 +1,9 @@
 ﻿#pragma once
 #include "Game.h"
 
-// ==================== 스테이지 설정 ====================
 constexpr int   MAX_STAGE = 5;
-constexpr int   MAX_TARGETS = MAX_STAGE;   // 스테이지당 최대 과녁 수 = 스테이지 번호
+constexpr int   MAX_TARGETS = MAX_STAGE;
 
-// ==================== 과녁 X 배치 ====================
-// 오른쪽 영역에 과녁들을 균등 배치. 충분한 간격 확보.
 constexpr int   TARGET_AREA_LEFT = CONSOLE_WIDTH - 25;
 constexpr int   TARGET_AREA_RIGHT = CONSOLE_WIDTH - 5;
 

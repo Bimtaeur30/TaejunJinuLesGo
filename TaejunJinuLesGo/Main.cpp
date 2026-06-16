@@ -5,7 +5,7 @@
 
 int main()
 {
-    Init();   // 스테이지 1 시작
+    Init(); // 스테이지 1 시작할 때
 
     while (true)
     {
@@ -17,7 +17,6 @@ int main()
         UpdateArrows();
         UpdateTargets();
 
-        // ── 스테이지 클리어 판정 ──────────────────────────
         if (AllTargetsCleared())
         {
             ShowStageClear(currentStage);
@@ -31,7 +30,6 @@ int main()
 
             StartStage(nextStage);
         }
-        // ─────────────────────────────────────────────────
 
         DrawStageHUD();   // 남은 과녁 수 실시간 갱신
 
@@ -41,7 +39,7 @@ int main()
     system("cls");
     SetCursorVisible(true);
     GotoXY(0, 0);
-    cout << "Game Over!" << endl;
+    cout << "게임오버!" << endl;
 
     return 0;
 }
