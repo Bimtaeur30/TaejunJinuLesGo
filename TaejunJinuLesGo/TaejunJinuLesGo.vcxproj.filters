@@ -36,6 +36,15 @@
     <ClInclude Include="Target.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Obstacle.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Skill.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Card.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Console.cpp">
@@ -57,6 +66,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Target.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Obstacle.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Skill.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Card.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

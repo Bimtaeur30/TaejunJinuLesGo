@@ -125,13 +125,17 @@
   <ItemGroup>
     <ClInclude Include="Arrow.h" />
     <ClInclude Include="Bow.h" />
+    <ClInclude Include="Card.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Obstacle.h" />
+    <ClInclude Include="Skill.h" />
     <ClInclude Include="Target.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Arrow.cpp" />
     <ClCompile Include="Bow.cpp" />
+    <ClCompile Include="Card.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp">
@@ -142,6 +146,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Obstacle.cpp" />
+    <ClCompile Include="Skill.cpp" />
     <ClCompile Include="Target.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
