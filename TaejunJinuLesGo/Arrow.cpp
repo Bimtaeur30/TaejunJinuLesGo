@@ -1,12 +1,10 @@
 ﻿#include "Arrow.h"
 #include "Target.h"
-
-#include <cmath>
-#include <iostream>
-#include <Windows.h>
+#include "Obstacle.h"
 
 Arrow arrows[MAX_ARROWS] = {};
-int ammo = MAX_AMMO;
+int   ammo = MAX_AMMO;
+float arrowSpeedMultiplier = 1.0f;
 
 void SpawnArrow(int startX, int startY)
 {
@@ -14,106 +12,24 @@ void SpawnArrow(int startX, int startY)
     {
         if (!arrows[i].active)
         {
-            float fx = (float)startX + 1.0f;
-            float fy = (float)startY;
-
-            arrows[i].x = fx;
-            arrows[i].y = fy;
-            arrows[i].prevX = fx;
-            arrows[i].prevY = fy;
-            arrows[i].active = true;
-
+            arrows[i] = { (float)startX, (float)startY, true };
             return;
         }
     }
 }
 
-static void ArrowGlyph(float dx, float dy, char& c0, char& c1)
+void DrawArrow(int x, int y, bool erase)
 {
-    float ax = dx;
-    float ay = dy * 0.5f;
-    float angle = atan2f(ay, ax);
-
-    const float P = 3.14159f;
-    const float PI8 = P / 8.0f;
-
-    if (angle > -PI8 && angle <= PI8)
-    {
-        c0 = '-';
-        c1 = '>';
-    }
-    else if (angle > PI8 && angle <= 3 * PI8)
-    {
-        c0 = '\\';
-        c1 = '>';
-    }
-    else if (angle > 3 * PI8 && angle <= 5 * PI8)
-    {
-        c0 = ' ';
-        c1 = 'v';
-    }
-    else if (angle > 5 * PI8 && angle <= 7 * PI8)
-    {
-        c0 = '<';
-        c1 = '/';
-    }
-    else if (angle > 7 * PI8 || angle <= -7 * PI8)
-    {
-        c0 = '<';
-        c1 = '-';
-    }
-    else if (angle > -7 * PI8 && angle <= -5 * PI8)
-    {
-        c0 = '<';
-        c1 = '\\';
-    }
-    else if (angle > -5 * PI8 && angle <= -3 * PI8)
-    {
-        c0 = ' ';
-        c1 = '^';
-    }
-    else
-    {
-        c0 = '/';
-        c1 = '>';
-    }
-}
-
-void DrawArrow(int x, int y, float dx, float dy, bool erase)
-{
-    char c0;
-    char c1;
-
-    ArrowGlyph(dx, dy, c0, c1);
-
     if (erase)
     {
         ClearCell(x, y);
-
-        if (c0 != ' ')
-        {
-            ClearCell(x + 1, y);
-        }
-
+        ClearCell(x + 1, y);
         return;
     }
 
     SetColor(Color::CYAN);
-
-    if (c0 == ' ')
-    {
-        GotoXY(x, y);
-        std::cout << c1;
-    }
-    else
-    {
-        GotoXY(x, y);
-        std::cout << c0;
-
-        GotoXY(x + 1, y);
-        std::cout << c1;
-    }
-
+    GotoXY(x, y); cout << '-';
+    GotoXY(x + 1, y); cout << '>';
     SetColor();
 }
 
@@ -122,19 +38,15 @@ void DrawAmmoHUD()
     GotoXY(AMMO_HUD_X, AMMO_HUD_Y);
 
     SetColor(Color::LIGHT_YELLOW);
-    std::cout << "Arrows: ";
+    cout << "Arrows: ";
 
     SetColor(Color::CYAN);
     for (int i = 0; i < ammo; ++i)
-    {
-        std::cout << '^';
-    }
+        cout << '^';
 
     SetColor(Color::GRAY);
     for (int i = ammo; i < MAX_AMMO; ++i)
-    {
-        std::cout << '.';
-    }
+        cout << '.';
 
     SetColor();
 }
@@ -142,7 +54,6 @@ void DrawAmmoHUD()
 bool CheckHit(int arrowX, int arrowY, int tgtX, int tgtY)
 {
     int headX = arrowX + 1;
-
     return (headX >= tgtX && headX <= tgtX + 2) &&
         (arrowY >= tgtY - 1 && arrowY <= tgtY + 1);
 }
@@ -156,55 +67,69 @@ void UpdateArrows()
         int oldX = (int)arrows[i].x;
         int oldY = (int)arrows[i].y;
 
-        arrows[i].prevX = arrows[i].x;
-        arrows[i].prevY = arrows[i].y;
-
-        arrows[i].x += ARROW_SPEED;
+        arrows[i].x += ARROW_BASE_SPEED * arrowSpeedMultiplier;
 
         int newX = (int)arrows[i].x;
         int newY = (int)arrows[i].y;
 
-        float dx = arrows[i].x - arrows[i].prevX;
-        float dy = arrows[i].y - arrows[i].prevY;
-
-        if (fabsf(dx) < 0.001f && fabsf(dy) < 0.001f)
-        {
-            dx = 1.0f;
-        }
-
-        if (newY < 1 || newY >= CONSOLE_HEIGHT - 1)
-        {
-            DrawArrow(oldX, oldY, dx, dy, true);
-            arrows[i].active = false;
-            continue;
-        }
-
-        int hitIndex = FindHitTarget(newX, newY);
-
-        if (hitIndex != -1)
-        {
-            DrawArrow(oldX, oldY, dx, dy, true);
-            arrows[i].active = false;
-
-            StartTargetBlink(hitIndex);
-            DestroyTarget(hitIndex);
-
-            ShakeConsoleWindow(6, 300, 20);
-            continue;
-        }
-
+        // 화면 밖 이탈
         if (newX >= CONSOLE_WIDTH - 1)
         {
-            DrawArrow(oldX, oldY, dx, dy, true);
+            DrawArrow(oldX, oldY, true);
             arrows[i].active = false;
             continue;
         }
 
-        if (newX != oldX || newY != oldY)
-        {
-            DrawArrow(oldX, oldY, dx, dy, true);
-        }
+        // ── 연속 충돌 검사 ──────────────────────────────
+        // 속도가 빨라지면 한 프레임에 여러 칸을 건너뛰므로,
+        // oldX+1 ~ newX (화살 머리가 지나간 모든 X)를 한 칸씩 검사한다.
+        bool hit = false;
+        bool blocked = false;
 
-        DrawArrow(newX, newY, dx, dy);
+        for (int scanX = oldX + 1; scanX <= newX; ++scanX)
+        {
+            // 과녁 검사
+            for (int t = 0; t < targetCount; ++t)
+            {
+                if (!targets[t].active)  continue;
+                if (targets[t].removing) continue;
+
+                if (CheckHit(scanX, newY, targets[t].x, (int)targets[t].y))
+                {
+                    hit = true;
+                    DrawArrow(oldX, oldY, true);
+                    arrows[i].active = false;
+                    StartTargetBlink(t);
+                    ShakeConsoleWindow(6, 300, 20);
+                    break;
+                }
+            }
+            if (hit) break;
+
+            // 장애물 검사 (화살만 소멸, 장애물은 파괴되지 않음)
+            for (int o = 0; o < obstacleCount; ++o)
+            {
+                if (!obstacles[o].active) continue;
+                if (obstacles[o].hidden)  continue;   // 스킬로 숨겨진 동안은 충돌 없음
+
+                if (CheckObstacleHit(scanX, newY, obstacles[o].x, (int)obstacles[o].y))
+                {
+                    blocked = true;
+                    DrawArrow(oldX, oldY, true);
+                    arrows[i].active = false;
+                    ShakeConsoleWindow(4, 200, 15);
+                    break;
+                }
+            }
+            if (blocked) break;
+        }
+        // ─────────────────────────────────────────────────
+
+        if (hit || blocked) continue;
+
+        if (newX != oldX)
+            DrawArrow(oldX, oldY, true);
+
+        DrawArrow(newX, newY);
     }
 }

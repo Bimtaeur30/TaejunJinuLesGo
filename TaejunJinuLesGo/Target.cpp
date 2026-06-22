@@ -1,232 +1,175 @@
 ﻿#include "Target.h"
-#include "Game.h"
-
-#include <iostream>
+#include <cstdlib>
+#include <cmath>
 
 Target targets[MAX_TARGETS] = {};
-int targetCount = 0;
-int currentStage = 1;
+int    targetCount = 0;
+int    currentStage = 1;
+
+static void EraseTargetAt(int x, int y)
+{
+    for (int dy = -1; dy <= 1; ++dy)
+    {
+        ClearCell(x, y + dy);
+        ClearCell(x + 1, y + dy);
+        ClearCell(x + 2, y + dy);
+    }
+}
 
 void InitStage(int stage)
 {
     currentStage = stage;
+    targetCount = stage;
+
+    int areaWidth = TARGET_AREA_RIGHT - TARGET_AREA_LEFT;
+    int slot = (targetCount > 1) ? areaWidth / (targetCount - 1) : 0;
 
     for (int i = 0; i < MAX_TARGETS; ++i)
-    {
         targets[i] = {};
-    }
 
-    if (stage == 1)
+    for (int i = 0; i < targetCount; ++i)
     {
-        targetCount = 1;
+        int xPos = (targetCount == 1)
+            ? (TARGET_AREA_LEFT + areaWidth / 2)
+            : (TARGET_AREA_LEFT + slot * i);
 
-        targets[0].x = CONSOLE_WIDTH - 10;
-        targets[0].y = CONSOLE_HEIGHT / 2.0f;
-        targets[0].dir = 1;
-        targets[0].speed = 0.20f;
-        targets[0].active = true;
-    }
-    else if (stage == 2)
-    {
-        targetCount = 2;
+        float base = TARGET_BASE_SPEED + TARGET_SPEED_STEP * (stage - 1);
+        float jitter = ((float)(rand() % 9) - 4) * 0.015f;
+        float spd = base + jitter;
+        if (spd < 0.05f) spd = 0.05f;
 
-        targets[0].x = CONSOLE_WIDTH - 12;
-        targets[0].y = 8.0f;
-        targets[0].dir = 1;
-        targets[0].speed = 0.25f;
-        targets[0].active = true;
+        int midY = (TARGET_MIN_Y + TARGET_MAX_Y) / 2;
+        int range = (TARGET_MAX_Y - TARGET_MIN_Y) / 2;
+        int startY = midY + (range * (2 * i - (targetCount - 1))) / (targetCount + 1);
 
-        targets[1].x = CONSOLE_WIDTH - 22;
-        targets[1].y = 20.0f;
-        targets[1].dir = -1;
-        targets[1].speed = 0.30f;
-        targets[1].active = true;
-    }
-    else
-    {
-        targetCount = 3;
-
-        targets[0].x = CONSOLE_WIDTH - 10;
-        targets[0].y = 6.0f;
-        targets[0].dir = 1;
-        targets[0].speed = 0.30f;
-        targets[0].active = true;
-
-        targets[1].x = CONSOLE_WIDTH - 20;
-        targets[1].y = 15.0f;
-        targets[1].dir = -1;
-        targets[1].speed = 0.35f;
-        targets[1].active = true;
-
-        targets[2].x = CONSOLE_WIDTH - 30;
-        targets[2].y = 23.0f;
-        targets[2].dir = 1;
-        targets[2].speed = 0.28f;
-        targets[2].active = true;
+        targets[i].y = (float)startY;
+        targets[i].x = xPos;
+        targets[i].dir = (i % 2 == 0) ? 1 : -1;
+        targets[i].speed = spd;
+        targets[i].blinkFrames = 0;
+        targets[i].active = true;
+        targets[i].removing = false;
+        targets[i].prevDrawY = startY;   // 초기 그린 Y
     }
 }
 
-void DrawStageHUD()
+void DrawTarget(int idx, bool erase)
 {
-    SetColor(Color::WHITE);
-    GotoXY(CONSOLE_WIDTH / 2 - 5, 1);
-    std::cout << "STAGE " << currentStage << " / " << MAX_STAGE;
-    SetColor();
-}
+    if (idx < 0 || idx >= targetCount) return;
 
-void DrawTarget(int index, bool erase)
-{
-    if (index < 0 || index >= targetCount) return;
+    Target& t = targets[idx];
+    int x = t.x;
+    int y = (int)t.y;
 
-    Target& target = targets[index];
+    if (erase)
+    {
+        EraseTargetAt(x, y);
+        return;
+    }
 
-    if (!target.active && !erase) return;
-
-    int x = target.x;
-    int y = (int)target.y;
-
-    bool blink =
-        target.blinkFrames > 0 &&
-        ((target.blinkFrames / BLINK_INTERVAL_FRAMES) % 2 == 1);
+    bool blink = (t.blinkFrames > 0) &&
+        ((t.blinkFrames / BLINK_INTERVAL_FRAMES) % 2 == 1);
 
     for (int dy = -1; dy <= 1; ++dy)
     {
-        if (erase)
-        {
-            ClearCell(x, y + dy);
-            ClearCell(x + 1, y + dy);
-            ClearCell(x + 2, y + dy);
-            continue;
-        }
-
         GotoXY(x, y + dy);
-
         if (blink)
         {
             SetColor(Color::WHITE);
-            std::cout << '|';
-
+            cout << '|';
             SetColor(Color::WHITE);
-            std::cout << (dy == 0 ? '@' : 'O');
-
+            cout << (dy == 0 ? '@' : 'O');
             SetColor(Color::WHITE);
-            std::cout << '|';
+            cout << '|';
         }
         else
         {
             SetColor(Color::LIGHT_RED);
-            std::cout << '|';
-
+            cout << '|';
             SetColor(dy == 0 ? Color::LIGHT_YELLOW : Color::LIGHT_RED);
-            std::cout << (dy == 0 ? '@' : 'O');
-
+            cout << (dy == 0 ? '@' : 'O');
             SetColor(Color::LIGHT_RED);
-            std::cout << '|';
+            cout << '|';
         }
     }
-
     SetColor();
+
+    // 그린 위치 기록
+    t.prevDrawY = y;
 }
 
-void StartTargetBlink(int index)
+void StartTargetBlink(int idx)
 {
-    if (index < 0 || index >= targetCount) return;
-
-    targets[index].blinkFrames = BLINK_TOTAL_FRAMES;
+    if (idx < 0 || idx >= targetCount) return;
+    targets[idx].blinkFrames = BLINK_TOTAL_FRAMES;
+    targets[idx].removing = true;
 }
 
-void DestroyTarget(int index)
-{
-    if (index < 0 || index >= targetCount) return;
-    if (!targets[index].active) return;
-
-    DrawTarget(index, true);
-    targets[index].active = false;
-}
-
-void UpdateTarget()
-{
-    for (int i = 0; i < targetCount; ++i)
-    {
-        Target& target = targets[i];
-
-        if (!target.active) continue;
-
-        int oldY = (int)target.y;
-
-        if (target.blinkFrames > 0)
-        {
-            --target.blinkFrames;
-            DrawTarget(i);
-        }
-
-        target.y += target.speed * target.dir;
-
-        if (target.y <= TARGET_MIN_Y)
-        {
-            target.y = (float)TARGET_MIN_Y;
-            target.dir = 1;
-        }
-
-        if (target.y >= TARGET_MAX_Y)
-        {
-            target.y = (float)TARGET_MAX_Y;
-            target.dir = -1;
-        }
-
-        int newY = (int)target.y;
-
-        if (newY != oldY)
-        {
-            DrawTarget(i, true);
-            DrawTarget(i);
-        }
-    }
-}
-
-int FindHitTarget(int arrowX, int arrowY)
-{
-    int headX = arrowX + 1;
-
-    for (int i = 0; i < targetCount; ++i)
-    {
-        Target& target = targets[i];
-
-        if (!target.active) continue;
-
-        int tx = target.x;
-        int ty = (int)target.y;
-
-        bool hitX = headX >= tx && headX <= tx + 2;
-        bool hitY = arrowY >= ty - 1 && arrowY <= ty + 1;
-
-        if (hitX && hitY)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-bool AreAllTargetsDead()
-{
-    for (int i = 0; i < targetCount; ++i)
-    {
-        if (targets[i].active)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
 void UpdateTargets()
 {
-    UpdateTarget();
+    for (int i = 0; i < targetCount; ++i)
+    {
+        Target& t = targets[i];
+        if (!t.active) continue;
+
+        if (t.blinkFrames > 0) // 블링크
+        {
+            --t.blinkFrames;
+
+            if (t.blinkFrames == 0 && t.removing)
+            {
+                EraseTargetAt(t.x, t.prevDrawY);
+                t.active = false;
+                continue;
+            }
+
+            DrawTarget(i);
+            continue;   // 블링크 중에는 이동 ㄴㄴ
+        }
+
+        if (t.removing) continue;
+
+
+        int drawnY = t.prevDrawY;
+
+        t.y += t.speed * t.dir;
+        if (t.y <= TARGET_MIN_Y) { t.y = (float)TARGET_MIN_Y; t.dir = 1; }
+        if (t.y >= TARGET_MAX_Y) { t.y = (float)TARGET_MAX_Y; t.dir = -1; }
+
+        int newY = (int)t.y;
+
+        if (newY != drawnY)
+        {
+            EraseTargetAt(t.x, drawnY);
+            DrawTarget(i);
+        }
+    }
 }
 
 bool AllTargetsCleared()
 {
-    return AreAllTargetsDead();
+    for (int i = 0; i < targetCount; ++i)
+        if (targets[i].active) return false;
+    return true;
+}
+
+void DrawStageHUD()
+{
+    int remaining = 0;
+    for (int i = 0; i < targetCount; ++i)
+        if (targets[i].active) ++remaining;
+
+    GotoXY(2, 1);
+    SetColor(Color::LIGHT_YELLOW);
+    cout << "Stage: ";
+    SetColor(Color::WHITE);
+    cout << currentStage << "/" << MAX_STAGE;
+
+    SetColor(Color::LIGHT_YELLOW);
+    cout << "   Targets: ";
+    SetColor(Color::LIGHT_RED);
+    cout << remaining << "/" << targetCount;
+    cout << "   ";
+
+    SetColor();
 }

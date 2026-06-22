@@ -1,45 +1,29 @@
 #include "Bow.h"
 #include "Arrow.h"
 
-#include <iostream>
-#include <Windows.h>
-
-int bowY = CONSOLE_HEIGHT / 2;
-
-static int bowMoveCooldown = 0;
+int   bowY = CONSOLE_HEIGHT / 2;
+float bowSpeedMultiplier = 1.0f;
+static int  bowMoveCooldown = 0;
 static bool bowMoveHeld = false;
 
 void DrawBow(int x, int y, bool erase)
 {
     if (erase)
     {
-        for (int dy = -1; dy <= 1; ++dy)
-        {
-            ClearCell(x, y + dy);
-        }
-
+        for (int dy = -1; dy <= 1; ++dy) ClearCell(x, y + dy);
         ClearCell(x + 1, y);
         ClearCell(x + 2, y);
-
         return;
     }
 
     SetColor(Color::LIGHT_YELLOW);
-    GotoXY(x, y - 1);
-    std::cout << ')';
-
-    GotoXY(x, y);
-    std::cout << ')';
-
-    GotoXY(x, y + 1);
-    std::cout << ')';
+    GotoXY(x, y - 1); cout << ')';
+    GotoXY(x, y);     cout << ')';
+    GotoXY(x, y + 1); cout << ')';
 
     SetColor(Color::WHITE);
-    GotoXY(x + 1, y);
-    std::cout << '=';
-
-    GotoXY(x + 2, y);
-    std::cout << '>';
+    GotoXY(x + 1, y); cout << '=';
+    GotoXY(x + 2, y); cout << '>';
 
     SetColor();
 }
@@ -51,9 +35,7 @@ void HandleInput()
     bool anyDir = upHeld || downHeld;
 
     if (bowMoveCooldown > 0)
-    {
         --bowMoveCooldown;
-    }
 
     if (!anyDir)
     {
@@ -73,18 +55,20 @@ void HandleInput()
             DrawBow(BOW_X, bowY);
         }
 
-        bowMoveCooldown = bowMoveHeld ? BOW_MOVE_REPEAT_DELAY : BOW_MOVE_FIRST_DELAY;
+        int baseDelay = bowMoveHeld ? BOW_MOVE_REPEAT_DELAY : BOW_MOVE_FIRST_DELAY;
+        // 배수가 클수록 대기 프레임이 줄어 더 빠르게 이동
+        int delay = (int)(baseDelay / bowSpeedMultiplier);
+        if (delay < 1) delay = 1;
+
+        bowMoveCooldown = delay;
         bowMoveHeld = true;
     }
 
     if (GetKeyDown(VK_SPACE) && ammo > 0)
     {
         SpawnArrow(BOW_X + 2, bowY);
-
         --ammo;
-
         DrawAmmoHUD();
-
         ShakeConsoleWindow(2, 80, 20);
     }
 }
