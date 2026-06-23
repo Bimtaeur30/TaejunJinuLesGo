@@ -219,6 +219,7 @@ static GameResult RunGame()
             int nextStage = currentStage + 1;
             if (nextStage > MAX_STAGE)
             {
+                SOUND->Play("CLEAR");
                 Sleep(1200);
                 return GameResult::GameClear;
             }
@@ -248,6 +249,7 @@ int main()
     SOUND->Load("BLOCKED", "Sound\\SFX\\ggeojyeo.mp3");
     SOUND->Load("AIR", "Sound\\SFX\\m_fixed_QdFWSub.mp3");
     SOUND->Load("YARU", "Sound\\SFX\\hangughalabeoji.mp3");
+    SOUND->Load("CLEAR","Sound\\SFX\\y2mate_HrgsElu.mp3");
         
     SOUND->PlayBGM("Sound\\BGM\\Gangnam.mp3");
     bool isProgramRunning = true;
