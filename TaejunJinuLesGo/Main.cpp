@@ -222,7 +222,8 @@ static GameResult RunGame()
                 Sleep(1200);
                 return GameResult::GameClear;
             }
-
+            
+            SOUND->Play("YARU");
             RunCardSelection();
             StartStage(nextStage);
         }
@@ -246,7 +247,9 @@ int main()
     SOUND->Load("GAMEOVER", "Sound\\SFX\\misyeonsilpae.mp3");
     SOUND->Load("BLOCKED", "Sound\\SFX\\ggeojyeo.mp3");
     SOUND->Load("AIR", "Sound\\SFX\\m_fixed_QdFWSub.mp3");
-
+    SOUND->Load("YARU", "Sound\\SFX\\hangughalabeoji.mp3");
+        
+    SOUND->PlayBGM("Sound\\BGM\\Gangnam.mp3");
     bool isProgramRunning = true;
 
     while (isProgramRunning)
