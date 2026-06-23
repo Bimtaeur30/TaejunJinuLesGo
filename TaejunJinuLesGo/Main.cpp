@@ -100,12 +100,12 @@ namespace
 
     void DrawGameOverTitle()
     {
-        DrawCenteredText(5, Color::LIGHT_RED,    "  _____                         ____                 ");
-        DrawCenteredText(6, Color::LIGHT_RED,    " / ____|                       / __ \\                ");
-        DrawCenteredText(7, Color::LIGHT_RED,    "| |  __  __ _ _ __ ___   ___  | |  | |_   _____ _ __ ");
-        DrawCenteredText(8, Color::LIGHT_RED,    "| | |_ |/ _` | '_ ` _ \\ / _ \\ | |  | \\ \\ / / _ \\ '__|");
-        DrawCenteredText(9, Color::LIGHT_RED,    "| |__| | (_| | | | | | |  __/ | |__| |\\ V /  __/ |   ");
-        DrawCenteredText(10, Color::LIGHT_RED,   " \\_____|\\__,_|_| |_| |_|\\___|  \\____/  \\_/ \\___|_|   ");
+        DrawCenteredText(5, Color::LIGHT_RED, "  _____                         ____                 ");
+        DrawCenteredText(6, Color::LIGHT_RED, " / ____|                       / __ \\                ");
+        DrawCenteredText(7, Color::LIGHT_RED, "| |  __  __ _ _ __ ___   ___  | |  | |_   _____ _ __ ");
+        DrawCenteredText(8, Color::LIGHT_RED, "| | |_ |/ _` | '_ ` _ \\ / _ \\ | |  | \\ \\ / / _ \\ '__|");
+        DrawCenteredText(9, Color::LIGHT_RED, "| |__| | (_| | | | | | |  __/ | |__| |\\ V /  __/ |   ");
+        DrawCenteredText(10, Color::LIGHT_RED, " \\_____|\\__,_|_| |_| |_|\\___|  \\____/  \\_/ \\___|_|   ");
     }
 
     GameOverAction ShowGameOverScreen()
@@ -170,7 +170,7 @@ namespace
 
 static GameResult RunGame()
 {
-    Init();   // 스테이지 1 시작, 스킬 슬롯 초기화 포함
+    Init();
 
     const float deltaSeconds = 1.0f / FPS;
 
@@ -187,17 +187,14 @@ static GameResult RunGame()
         UpdateObstacles();
         UpdateSkills(deltaSeconds);
 
-        // 스킬 사용 입력: 1, 2, 3, 4 키 -> 0-based 슬롯
         if (GetKeyDown('1')) TryUseSkill(0);
         if (GetKeyDown('2')) TryUseSkill(1);
         if (GetKeyDown('3')) TryUseSkill(2);
         if (GetKeyDown('4')) TryUseSkill(3);
 
-        // 화살을 모두 사용했고, 날아가는 화살도 없는데 과녁이 남아 있으면 게임오버
         if (IsGameOver())
             return GameResult::GameOver;
 
-        // 스테이지 클리어 판정
         if (AllTargetsCleared())
         {
             ShowStageClear(currentStage);
@@ -205,18 +202,16 @@ static GameResult RunGame()
             int nextStage = currentStage + 1;
             if (nextStage > MAX_STAGE)
             {
-                ShowGameClear();
+                Sleep(1200); // ShowStageClear already waits 1.8 seconds, so total wait is about 3 seconds.
                 return GameResult::GameClear;
             }
 
-            // 카드 3장 중 하나를 골라 스킬 획득
             RunCardSelection();
-
             StartStage(nextStage);
         }
 
-        DrawStageHUD();   // 남은 과녁 수 실시간 갱신
-        DrawSkillBox();   // 스킬 박스 UI, 쿨타임 실시간 갱신
+        DrawStageHUD();
+        DrawSkillBox();
 
         FrameSync(FPS);
     }
@@ -252,7 +247,11 @@ int main()
                         break;
                     }
                 }
-                else
+                else if (result == GameResult::GameClear)
+                {
+                    break;
+                }
+                else if (result == GameResult::ExitGame)
                 {
                     isProgramRunning = false;
                     break;
