@@ -106,7 +106,7 @@ void UpdateArrows()
             }
             if (hit) break;
 
-            // 장애물 검사 (화살만 소멸, 장애물은 파괴되지 않음)
+            // 장애물 검사 (화살만 소멸, 장애물은 파괴되지 않음
             for (int o = 0; o < obstacleCount; ++o)
             {
                 if (!obstacles[o].active) continue;

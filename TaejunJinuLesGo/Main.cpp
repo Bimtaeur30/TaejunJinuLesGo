@@ -51,9 +51,23 @@ namespace
         return remaining;
     }
 
+    bool HasTargetWaitingForHit()
+    {
+        for (int i = 0; i < targetCount; ++i)
+        {
+            // removing == true means the arrow already hit this target,
+            // but the blink animation has not finished yet.
+            // Do not count that target as a game-over reason.
+            if (targets[i].active && !targets[i].removing)
+                return true;
+        }
+
+        return false;
+    }
+
     bool IsGameOver()
     {
-        return ammo <= 0 && !HasActiveArrow() && !AllTargetsCleared();
+        return ammo <= 0 && !HasActiveArrow() && HasTargetWaitingForHit();
     }
 
     void DrawText(int x, int y, Color color, const string& text)
@@ -192,9 +206,6 @@ static GameResult RunGame()
         if (GetKeyDown('3')) TryUseSkill(2);
         if (GetKeyDown('4')) TryUseSkill(3);
 
-        if (IsGameOver())
-            return GameResult::GameOver;
-
         if (AllTargetsCleared())
         {
             ShowStageClear(currentStage);
@@ -202,13 +213,16 @@ static GameResult RunGame()
             int nextStage = currentStage + 1;
             if (nextStage > MAX_STAGE)
             {
-                Sleep(1200); // ShowStageClear already waits 1.8 seconds, so total wait is about 3 seconds.
+                Sleep(1200);
                 return GameResult::GameClear;
             }
 
             RunCardSelection();
             StartStage(nextStage);
         }
+
+        if (IsGameOver())
+            return GameResult::GameOver;
 
         DrawStageHUD();
         DrawSkillBox();
