@@ -1,6 +1,7 @@
 ﻿#include "Arrow.h"
 #include "Target.h"
 #include "Obstacle.h"
+#include "SoundManager.h"
 
 Arrow arrows[MAX_ARROWS] = {};
 int   ammo = MAX_AMMO;
@@ -75,6 +76,7 @@ void UpdateArrows()
         // 화면 밖 이탈
         if (newX >= CONSOLE_WIDTH - 1)
         {
+            SOUND->Play("AIR");
             DrawArrow(oldX, oldY, true);
             arrows[i].active = false;
             continue;
@@ -96,6 +98,7 @@ void UpdateArrows()
 
                 if (CheckHit(scanX, newY, targets[t].x, (int)targets[t].y))
                 {
+                    SOUND->Play("HIT");
                     hit = true;
                     DrawArrow(oldX, oldY, true);
                     arrows[i].active = false;
@@ -114,6 +117,7 @@ void UpdateArrows()
 
                 if (CheckObstacleHit(scanX, newY, obstacles[o].x, (int)obstacles[o].y))
                 {
+                    SOUND->Play("BLOCKED");
                     blocked = true;
                     DrawArrow(oldX, oldY, true);
                     arrows[i].active = false;

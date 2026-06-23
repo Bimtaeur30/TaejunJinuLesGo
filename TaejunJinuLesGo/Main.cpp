@@ -11,6 +11,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "SoundManager.h"
+
 namespace
 {
     enum class GameResult
@@ -55,9 +57,6 @@ namespace
     {
         for (int i = 0; i < targetCount; ++i)
         {
-            // removing == true means the arrow already hit this target,
-            // but the blink animation has not finished yet.
-            // Do not count that target as a game-over reason.
             if (targets[i].active && !targets[i].removing)
                 return true;
         }
@@ -92,7 +91,8 @@ namespace
 
         GotoXY(x, y);
         cout << '+';
-        for (int i = 0; i < width - 2; ++i) cout << '-';
+        for (int i = 0; i < width - 2; ++i)
+            cout << '-';
         cout << '+';
 
         for (int row = 1; row < height - 1; ++row)
@@ -106,7 +106,8 @@ namespace
 
         GotoXY(x, y + height - 1);
         cout << '+';
-        for (int i = 0; i < width - 2; ++i) cout << '-';
+        for (int i = 0; i < width - 2; ++i)
+            cout << '-';
         cout << '+';
 
         SetColor();
@@ -124,6 +125,8 @@ namespace
 
     GameOverAction ShowGameOverScreen()
     {
+        SOUND->Play("GAMEOVER");
+
         system("cls");
         SetConsoleWindowSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
         SetConsoleWindowStyle(true);
@@ -152,21 +155,23 @@ namespace
         cout << ammo;
         SetColor();
 
-        DrawCenteredText(22, Color::CYAN, "[ R ] Retry    [ M ] Main Menu    [ ESC ] Exit");
+        DrawCenteredText(22, Color::CYAN, "[ 1 ] Retry    [ 2 ] Main Menu    [ 3 ] Exit");
 
         while (true)
         {
+            SOUND->Update();
+
             if (_kbhit())
             {
                 int key = _getch();
 
-                if (key == 'r' || key == 'R')
+                if (key == '1' || key == 'r' || key == 'R')
                     return GameOverAction::Retry;
 
-                if (key == 'm' || key == 'M')
+                if (key == '2' || key == 'm' || key == 'M')
                     return GameOverAction::MainMenu;
 
-                if (key == VK_ESCAPE || key == 27)
+                if (key == '3' || key == VK_ESCAPE || key == 27)
                     return GameOverAction::ExitProgram;
             }
 
@@ -191,6 +196,7 @@ static GameResult RunGame()
     while (true)
     {
         UpdateInput();
+        SOUND->Update();
 
         if (GetKeyDown(VK_ESCAPE))
             return GameResult::ExitGame;
@@ -233,6 +239,14 @@ static GameResult RunGame()
 
 int main()
 {
+    SOUND->Init();
+
+    SOUND->Load("HIT", "Sound\\SFX\\yeoja_6HD9E4h.mp3");
+    SOUND->Load("SHOOT", "Sound\\SFX\\ingan.mp3");
+    SOUND->Load("GAMEOVER", "Sound\\SFX\\misyeonsilpae.mp3");
+    SOUND->Load("BLOCKED", "Sound\\SFX\\ggeojyeo.mp3");
+    SOUND->Load("AIR", "Sound\\SFX\\m_fixed_QdFWSub.mp3");
+
     bool isProgramRunning = true;
 
     while (isProgramRunning)
@@ -281,6 +295,8 @@ int main()
             isProgramRunning = false;
         }
     }
+
+    SOUND->Release();
 
     ResetConsoleForExit();
     return 0;

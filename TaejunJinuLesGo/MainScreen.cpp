@@ -1,5 +1,6 @@
 #include "MainScreen.h"
 #include "Console.h"
+#include "SoundManager.h"
 
 #include <Windows.h>
 #include <shellapi.h>
@@ -83,13 +84,13 @@ void DrawMenu()
 
     SetColor(Color::CYAN);
     GotoXY(cx - 10, startY + 2);
-    std::cout << "[ 1 ] 게임 시작";
+    std::cout << "[ 1 ] Game Start";
 
     GotoXY(cx - 10, startY + 3);
-    std::cout << "[ 2 ] 소리 설정";
+    std::cout << "[ 2 ] Sound Settings";
 
     GotoXY(cx - 10, startY + 4);
-    std::cout << "[ 3 ] 게임 종료";
+    std::cout << "[ 3 ] Exit Game";
 
     SetColor(Color::WHITE);
     GotoXY(cx - 20, startY + 6);
@@ -118,7 +119,6 @@ void DrawTitle()
 
 bool OpenWindowsSoundSettings()
 {
-    // Windows 10/11 설정 앱의 [시스템 > 소리] 화면을 연다.
     HINSTANCE result = ShellExecuteW(
         nullptr,
         L"open",
@@ -128,7 +128,6 @@ bool OpenWindowsSoundSettings()
         SW_SHOWNORMAL
     );
 
-    // 설정 앱 실행이 막힌 환경이면 구형 제어판 소리 창으로 한 번 더 시도한다.
     if ((INT_PTR)result <= 32)
     {
         result = ShellExecuteW(
@@ -173,6 +172,7 @@ int ShowMainScreen()
 
     while (true)
     {
+        SOUND->Update();
         UpdateInput();
 
         for (int i = 0; i < 2; ++i)

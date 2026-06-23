@@ -1,5 +1,6 @@
 #include "Bow.h"
 #include "Arrow.h"
+#include "SoundManager.h"
 
 int   bowY = CONSOLE_HEIGHT / 2;
 float bowSpeedMultiplier = 1.0f;
@@ -70,5 +71,6 @@ void HandleInput()
         --ammo;
         DrawAmmoHUD();
         ShakeConsoleWindow(2, 80, 20);
+        SOUND->Play("SHOOT");
     }
 }
